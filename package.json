@@ -1,0 +1,31 @@
+{
+  "name": "racehub-playwright",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Test framework with tests on Playwright to test racehub website",
+  "scripts": {
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/olekmolodetskyi/racehub-playwright.git"
+  },
+  "keywords": [],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/olekmolodetskyi/racehub-playwright/issues"
+  },
+  "homepage": "https://github.com/olekmolodetskyi/racehub-playwright#readme",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.65.1",
+    "@types/node": "^26.6.6",
+    "dotenv": "^18.0.10",
+    "eslint": "^10.15.0",
+    "eslint-plugin-playwright": "^2.12.2",
+    "globals": "^17.14.0",
+    "typescript": "~6.0",
+    "typescript-eslint": "^8.72.2"
+  }
+}

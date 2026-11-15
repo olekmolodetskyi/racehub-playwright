@@ -1,0 +1,24 @@
+import { test, expect } from '@playwright/test';
+import { CatalogPage } from '../../src/pages/catalog.page';
+
+test.describe('Catalog tests', () => {
+  let catalogPage: CatalogPage;
+
+  test.beforeEach(async ({ page }) => {
+    catalogPage = new CatalogPage(page);
+    await catalogPage.goto();
+  });
+
+  test('Guest sees catalog of events on page', { tag: '@EVT-01' }, async () => {
+    await expect(catalogPage.raceCounter).toHaveText(/^\d+ events?$/);
+    const eventCard = catalogPage.event(0);
+    await expect(eventCard.image).toBeVisible();
+    await expect(eventCard.day).toBeVisible();
+    await expect(eventCard.month).toBeVisible();
+    await expect(eventCard.name).toBeVisible();
+    await expect(eventCard.statusBadge).toBeVisible();
+    await expect(eventCard.statusBadge).toHaveAttribute('data-state', /^(upcoming|closed|open|sold_out|cancelled)$/);
+    await expect(eventCard.distance).toBeVisible();
+    await expect(eventCard.price).toBeVisible();
+  });
+});

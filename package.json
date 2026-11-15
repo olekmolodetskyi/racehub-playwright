@@ -7,7 +7,10 @@
     "lint": "eslint . --max-warnings 0",
     "typecheck": "tsc",
     "format": "prettier . --write",
-    "format:check": "prettier . --check"
+    "format:check": "prettier . --check",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "report": "playwright show-report"
   },
   "repository": {
     "type": "git",

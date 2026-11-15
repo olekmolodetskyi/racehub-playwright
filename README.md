@@ -29,6 +29,19 @@ npx playwright install
 
 Copy `.env.example` to `.env` and replace URL placeholder with your racehub url
 
+## how to start
+
+```bash
+npm test
+npm test:ui
+```
+
+## how to see results
+
+```bash
+npm run report
+```
+
 ## status
 
 Work in progress

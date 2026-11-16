@@ -1,15 +1,11 @@
-import { test, expect } from '@playwright/test';
-import { CatalogPage } from '../../src/pages/catalog.page';
+import { test, expect } from '../../src/fixtures/catalog.fixture';
 
 test.describe('Catalog tests', () => {
-  let catalogPage: CatalogPage;
-
-  test.beforeEach(async ({ page }) => {
-    catalogPage = new CatalogPage(page);
+  test.beforeEach(async ({ catalogPage }) => {
     await catalogPage.goto();
   });
 
-  test('Guest sees catalog of events on page', { tag: '@EVT-01' }, async () => {
+  test('Guest sees catalog of events on page', { tag: '@EVT-01' }, async ({ catalogPage }) => {
     await expect(catalogPage.raceCounter).toHaveText(/^\d+ events?$/);
     const eventCard = catalogPage.event(0);
     await expect(eventCard.image).toBeVisible();

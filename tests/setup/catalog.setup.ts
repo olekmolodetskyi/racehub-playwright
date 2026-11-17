@@ -1,7 +1,7 @@
 import { test as setup } from '@playwright/test';
-import { RaceHubApi } from '../../src/api/racehub-test.api';
+import { TestHooksApi } from '../../src/api/test-hooks.api';
 
 setup('prepare catalog data', async ({ request }) => {
-  const raceApi = new RaceHubApi(request);
-  await raceApi.seedBaseLine();
+  const testHooksApi = new TestHooksApi(request);
+  await testHooksApi.seedBaseline();
 });

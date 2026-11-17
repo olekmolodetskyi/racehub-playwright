@@ -25,4 +25,9 @@ export default defineConfig([
     files: ['tests/**'],
     extends: [playwright.configs['flat/recommended']],
   },
+
+  {
+    files: ['**/*.setup.ts'],
+    rules: { 'playwright/expect-expect': 'off' },
+  },
 ]);

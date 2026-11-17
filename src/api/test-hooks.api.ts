@@ -1,5 +1,5 @@
 import { expect, type APIRequestContext } from '@playwright/test';
-export class RaceHubApi {
+export class TestHooksApi {
   private readonly testToken: string;
   constructor(private readonly request: APIRequestContext) {
     const testToken = process.env.TEST_TOKEN;
@@ -14,7 +14,7 @@ export class RaceHubApi {
     await expect(response).toBeOK();
   }
 
-  async seedBaseLine() {
+  async seedBaseline() {
     const response = await this.request.post('/api/test/seed', {
       headers: { 'x-test-token': this.testToken },
       data: { fixture: 'baseline' },

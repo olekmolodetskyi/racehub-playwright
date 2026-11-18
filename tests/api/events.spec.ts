@@ -1,6 +1,7 @@
 import { test, expect } from '../../src/fixtures/api.fixture';
 import { type EventsResponse } from '../../src/api/racehub.api';
 import { normalize } from '../../src/utils/text';
+import { itemAt } from '../../src/utils/arrays';
 
 test.describe('Default event list', () => {
   test('List events does not contain finished events', { tag: ['@api', '@EVT-01'] }, ({ eventsList }) => {
@@ -69,6 +70,19 @@ test.describe('Event filters', () => {
     for (const event of body.items) {
       const searchable = normalize(`${event.title} | ${event.city}`);
       expect(searchable, `event ${event.slug}`).toContain(normalize(query));
+    }
+  });
+
+  test('filters by date range', { tag: ['@api', '@EVT-03'] }, async ({ eventsList, eventsApi }) => {
+    const event = itemAt(eventsList.items, 2);
+    const searchDay = event.startsAt.slice(0, 10);
+    const response = await eventsApi.query({ from: searchDay, to: searchDay });
+    expect(response.status()).toBe(200);
+    const body = (await response.json()) as EventsResponse;
+    expect(body.items.length).toBeGreaterThan(0);
+    for (const event of body.items) {
+      const day = event.startsAt.slice(0, 10);
+      expect(day >= searchDay && day <= searchDay, `event ${event.slug} on ${day}`).toBe(true);
     }
   });
 });

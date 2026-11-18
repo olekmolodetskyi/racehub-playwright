@@ -48,4 +48,18 @@ export class EventsApi {
   getEvents() {
     return this.request.get('/api/events');
   }
+  query(params: EventQuery = {}) {
+    return this.request.get('/api/events', { params });
+  }
 }
+
+export type EventQuery = {
+  q?: string;
+  sort?: string;
+  city?: string;
+  distance?: string;
+  from?: string;
+  to?: string;
+  past?: boolean;
+  page?: number;
+};

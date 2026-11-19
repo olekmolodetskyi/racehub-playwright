@@ -86,3 +86,30 @@ test.describe('Event filters', () => {
     }
   });
 });
+
+test.describe('Pagination', { tag: ['@api', '@EVT-05'] }, () => {
+  test('returns 10 events per page', async ({ eventsList, eventsApi }) => {
+    const eventNumber = 10;
+    expect(eventsList.pageSize).toBe(eventNumber);
+    const response = await eventsApi.query({ page: 1 });
+    expect(response.status()).toBe(200);
+    const body = (await response.json()) as EventsResponse;
+    expect(body.items.length).toBeGreaterThan(0);
+    expect(body.items).toHaveLength(eventNumber);
+  });
+
+  test('all pages return all events and events on all pages are unique', async ({ eventsList, eventsApi }) => {
+    const totalEvents = eventsList.total;
+    const pageSize = eventsList.pageSize;
+    const allEventIds: number[] = [];
+    const lastPage = Math.ceil(totalEvents / pageSize);
+    for (let page = 1; page <= lastPage; page++) {
+      const response = await eventsApi.query({ page: page });
+      expect(response.status()).toBe(200);
+      const body = (await response.json()) as EventsResponse;
+      allEventIds.push(...body.items.map((event) => event.id));
+    }
+    expect(allEventIds).toHaveLength(totalEvents);
+    expect(new Set(allEventIds).size).toBe(totalEvents);
+  });
+});

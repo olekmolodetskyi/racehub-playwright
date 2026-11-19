@@ -1,5 +1,5 @@
 import { test, expect } from '../../src/fixtures/api.fixture';
-import { type EventsResponse } from '../../src/api/racehub.api';
+import { type EventsResponse, type EventDetails, type ErrorResponse } from '../../src/api/racehub.api';
 import { normalize } from '../../src/utils/text';
 import { itemAt } from '../../src/utils/arrays';
 
@@ -111,5 +111,53 @@ test.describe('Pagination', { tag: ['@api', '@EVT-05'] }, () => {
     }
     expect(allEventIds).toHaveLength(totalEvents);
     expect(new Set(allEventIds).size).toBe(totalEvents);
+  });
+});
+
+test.describe('Event details', { tag: ['@api', '@EVT-08'] }, () => {
+  test('get event details', async ({ eventsList, eventsApi }) => {
+    const summary = itemAt(eventsList.items, 0);
+    const response = await eventsApi.getBySlug(summary.slug);
+    await expect(response).toBeOK();
+    const details = (await response.json()) as EventDetails;
+    expect(details).toMatchObject({
+      id: summary.id,
+      slug: summary.slug,
+      title: summary.title,
+      city: summary.city,
+      currency: summary.currency,
+      status: summary.status,
+      registrationState: summary.registrationState,
+      minPriceMinor: summary.minPriceMinor,
+      startsAt: summary.startsAt,
+      cover: summary.cover,
+      coverAlt: summary.coverAlt,
+      registrationOpensAt: summary.registrationOpensAt,
+      registrationClosesAt: summary.registrationClosesAt,
+      description: expect.stringMatching(/\S/),
+      organizerName: expect.stringMatching(/\S/),
+      distances: summary.distances,
+    });
+    expect(details.distances.length).toBeGreaterThan(0);
+    for (const distance of details.distances) {
+      expect(distance, `distance ${distance.id}`).toMatchObject({
+        priceMinor: expect.any(Number),
+        capacity: expect.any(Number),
+        spotsLeft: expect.any(Number),
+        startTime: expect.any(String),
+      });
+    }
+  });
+
+  test('returns 404 for a nonexistent slug', async ({ eventsApi }) => {
+    const response = await eventsApi.getBySlug('non-existing-slug');
+    expect(response.status()).toBe(404);
+    const body = (await response.json()) as ErrorResponse;
+    expect(body).toMatchObject({
+      error: {
+        code: 'NOT_FOUND',
+        message: 'Not found.',
+      },
+    });
   });
 });

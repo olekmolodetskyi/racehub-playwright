@@ -160,4 +160,29 @@ test.describe('Event details', { tag: ['@api', '@EVT-08'] }, () => {
       },
     });
   });
+
+  test('distance invariants hold for events on the first page', async ({ eventsList, eventsApi }) => {
+    expect(eventsList.items.length).toBeGreaterThan(0);
+    for (const event of eventsList.items) {
+      const response = await eventsApi.getBySlug(event.slug);
+      await expect(response).toBeOK();
+      const details = (await response.json()) as EventDetails;
+      expect(details.distances.length).toBeGreaterThan(0);
+      const priceMinors = details.distances.map((distance) => distance.priceMinor);
+      for (const distance of details.distances) {
+        const eventDetailAndDistance = `event ${details.slug}, distance ${distance.id}`;
+        expect(distance.spotsLeft, `spotsLeft ${eventDetailAndDistance}`).toBeGreaterThanOrEqual(0);
+        expect(distance.spotsLeft, `spotsLeft ${eventDetailAndDistance}`).toBeLessThanOrEqual(distance.capacity);
+        expect(distance.priceMinor, `priceMinor ${eventDetailAndDistance}`).toBeGreaterThanOrEqual(0);
+        expect(Number.isInteger(distance.priceMinor), `priceMinor ${eventDetailAndDistance} is not integer!`).toBe(
+          true,
+        );
+      }
+      const minPrice = Math.min(...priceMinors);
+      expect(
+        details.minPriceMinor === minPrice,
+        `minPriceMinor event ${details.slug} is not minimal (${minPrice})!`,
+      ).toBe(true);
+    }
+  });
 });

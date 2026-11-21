@@ -20,7 +20,9 @@ export interface Distance {
   category: string;
 }
 export type EventStatus = 'published' | 'cancelled' | 'finished';
+
 export type RegistrationState = 'upcoming' | 'open' | 'sold_out' | 'closed' | 'cancelled' | 'finished';
+
 export interface Event {
   id: number;
   slug: string;
@@ -33,6 +35,8 @@ export interface Event {
   startsAt: string;
   cover: string | null;
   coverAlt: string | null;
+  registrationOpensAt: string;
+  registrationClosesAt: string;
   distances: Distance[];
 }
 
@@ -51,6 +55,22 @@ export class EventsApi {
   query(params: EventQuery = {}) {
     return this.request.get('/api/events', { params });
   }
+  getBySlug(slug: string) {
+    return this.request.get(`/api/events/${encodeURIComponent(slug)}`);
+  }
+}
+
+export interface DistanceDetails extends Distance {
+  priceMinor: number;
+  capacity: number;
+  spotsLeft: number;
+  startTime: string;
+}
+
+export interface EventDetails extends Omit<Event, 'distances'> {
+  description: string;
+  organizerName: string;
+  distances: DistanceDetails[];
 }
 
 export type EventQuery = {
@@ -63,3 +83,11 @@ export type EventQuery = {
   past?: boolean;
   page?: number;
 };
+
+export interface ErrorResponse {
+  error: {
+    code: string;
+    message: string;
+    details?: { field: string; message: string }[];
+  };
+}

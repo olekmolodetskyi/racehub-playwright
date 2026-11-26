@@ -52,9 +52,15 @@ export class EventsApi {
   getEvents() {
     return this.request.get('/api/events');
   }
+
   query(params: EventQuery = {}) {
     return this.request.get('/api/events', { params });
   }
+
+  queryRaw(params: Record<string, string>) {
+    return this.request.get('/api/events', { params });
+  }
+
   getBySlug(slug: string) {
     return this.request.get(`/api/events/${encodeURIComponent(slug)}`);
   }

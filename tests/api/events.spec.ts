@@ -161,6 +161,19 @@ test.describe('Event details', { tag: ['@api', '@EVT-08'] }, () => {
     });
   });
 
+  test(`returns 404 for id instead slug`, async ({ eventsList, eventsApi }) => {
+    const eventId = itemAt(eventsList.items, 0).id;
+    const response = await eventsApi.getBySlug(`${eventId}`);
+    expect(response.status()).toBe(404);
+    const body = (await response.json()) as ErrorResponse;
+    expect(body).toMatchObject({
+      error: {
+        code: 'NOT_FOUND',
+        message: 'Not found.',
+      },
+    });
+  });
+
   test('distance invariants hold for events on the first page', async ({ eventsList, eventsApi }) => {
     expect(eventsList.items.length).toBeGreaterThan(0);
     for (const event of eventsList.items) {
@@ -185,4 +198,116 @@ test.describe('Event details', { tag: ['@api', '@EVT-08'] }, () => {
       ).toBe(true);
     }
   });
+});
+
+test.describe('Negative cases', { tag: ['@api'] }, () => {
+  const invalidQueries = {
+    from: [
+      { name: 'wrong date format', value: '01-12-2026' },
+      { name: 'almost correct date format', value: '2026-12-1' },
+    ],
+    to: [
+      { name: 'wrong date format', value: '2026/12/31' },
+      { name: 'almost correct date format', value: '2026-12-1' },
+    ],
+    distance: [
+      { name: 'value not from the list', value: 'ultra' },
+      { name: 'combination of correct value and non-correct', value: '5k,ultra' },
+    ],
+    past: [{ name: 'non-boolean value', value: 'yes' }],
+    sort: [{ name: 'value not from the list', value: 'distance_asc' }],
+    page: [
+      { name: 'not a number', value: 'first' },
+      { name: 'less than min', value: '0' },
+      { name: 'more than max', value: '1001' },
+      { name: 'not integer', value: '1.5' },
+    ],
+    q: [{ name: 'more than max', value: 'x'.repeat(101) }],
+    city: [{ name: 'more than max', value: 'x'.repeat(101) }],
+  };
+
+  for (const [field, cases] of Object.entries(invalidQueries)) {
+    test.describe(`${field}`, () => {
+      for (const { name, value } of cases) {
+        test(`rejects ${name}`, async ({ eventsApi }) => {
+          const response = await eventsApi.queryRaw({ [field]: value });
+          expect(response.status()).toBe(400);
+          const body = (await response.json()) as ErrorResponse;
+          expect(body.error.code).toBe('BAD_REQUEST');
+          expect(body.error.details).toContainEqual(expect.objectContaining({ field }));
+        });
+      }
+    });
+  }
+
+  test.describe(`Rejects non-existing dates`, () => {
+    const nonExistingDate = '2050-02-30';
+
+    test(`for from`, async ({ eventsApi }) => {
+      test.fail(true, 'Known bug: https://github.com/olekmolodetskyi/racehub/issues/21');
+      const response = await eventsApi.query({ from: nonExistingDate });
+      expect(response.status()).toBe(400);
+      const body = (await response.json()) as ErrorResponse;
+      expect(body.error.code).toBe('BAD_REQUEST');
+      expect(body.error.details).toContainEqual(expect.objectContaining({ field: 'from' }));
+    });
+
+    test(`for to`, async ({ eventsApi }) => {
+      test.fail(true, 'Known bug: https://github.com/olekmolodetskyi/racehub/issues/21');
+      const response = await eventsApi.query({ to: nonExistingDate });
+      expect(response.status()).toBe(400);
+      const body = (await response.json()) as ErrorResponse;
+      expect(body.error.code).toBe('BAD_REQUEST');
+      expect(body.error.details).toContainEqual(expect.objectContaining({ field: 'to' }));
+    });
+
+    test(`for from and to`, async ({ eventsApi }) => {
+      test.fail(true, 'Known bug: https://github.com/olekmolodetskyi/racehub/issues/21');
+      const response = await eventsApi.query({ from: nonExistingDate, to: nonExistingDate });
+      expect(response.status()).toBe(400);
+      const body = (await response.json()) as ErrorResponse;
+      expect(body.error.code).toBe('BAD_REQUEST');
+      expect(body.error.details).toContainEqual(expect.objectContaining({ field: 'from' }));
+    });
+  });
+});
+
+test.describe(`Boundary values`, { tag: ['@api'] }, () => {
+  const validQueries = {
+    city: [{ name: 'exactly max value', value: 'x'.repeat(100) }],
+    page: [
+      { name: 'exactly max value', value: '1000' },
+      { name: 'exactly min value', value: '1' },
+    ],
+  };
+
+  for (const [field, cases] of Object.entries(validQueries)) {
+    test.describe(`${field}`, () => {
+      for (const { name, value } of cases) {
+        test(`accepts ${name}`, async ({ eventsApi }) => {
+          const response = await eventsApi.queryRaw({ [field]: value });
+          expect(response.status()).toBe(200);
+        });
+      }
+    });
+  }
+
+  test(`exactly max value q`, async ({ eventsApi }) => {
+    test.fail(true, 'Known bug: https://github.com/olekmolodetskyi/racehub/issues/20');
+    const response = await eventsApi.query({ q: 'x'.repeat(100) });
+    expect(response.status()).toBe(200);
+  });
+});
+
+test(`from later than to`, { tag: ['@api'] }, async ({ eventsList, eventsApi }) => {
+  const earliest = itemAt(eventsList.items, 0).startsAt.slice(0, 10);
+  const latest = itemAt(eventsList.items, eventsList.items.length - 1).startsAt.slice(0, 10);
+  const normal = await eventsApi.query({ from: earliest, to: latest });
+  await expect(normal).toBeOK();
+  const normalList = (await normal.json()) as EventsResponse;
+  expect(normalList.total).toBeGreaterThan(0);
+  const reversed = await eventsApi.query({ from: latest, to: earliest });
+  expect(reversed.status()).toBe(200);
+  const reversedList = (await reversed.json()) as EventsResponse;
+  expect(reversedList.total).toBe(0);
 });
